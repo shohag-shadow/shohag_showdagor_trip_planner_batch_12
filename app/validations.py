@@ -1,7 +1,5 @@
 from datetime import datetime
 from math import isfinite
-from math import isfinite
-from datetime import datetime
 from flask import jsonify
 
 def validate_date(body, field_name):
@@ -30,7 +28,7 @@ def validate_text(body, field_name, max_length=None):
         return jsonify({"error":f"{field_name} must be a non-empty string"}),400
     cleaned_value = value.strip()
     if max_length is not None and len(cleaned_value) > max_length:
-        return jsonify({"error":f"{field_name} cannot be more than {max_length} characters"})
+        return jsonify({"error":f"{field_name} cannot be more than {max_length} characters"}),400
     return None
 
 def validate_positive_int(body, field_name):
@@ -58,6 +56,9 @@ def validate_start_end_date(data):
         return end_date_error
     start_date=datetime.strptime(data["start_date"].strip(), "%Y-%m-%d").date()
     end_date=datetime.strptime(data["end_date"].strip(), "%Y-%m-%d").date()
+    if end_date < start_date:
+    return jsonify({"error": "end_date must be on or after start_date"}), 400
+    return None
     
 def validate_create_trip(data):
     missing_fields_error=validate_missing_field(data,[
@@ -81,4 +82,4 @@ def validate_create_trip(data):
     max_travelers_error=validate_positive_int(data,"max_travelers")
     if(max_travelers_error is not None):
         return max_travelers_error
-    
+    return None

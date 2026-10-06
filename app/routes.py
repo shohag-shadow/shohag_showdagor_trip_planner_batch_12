@@ -8,9 +8,13 @@ def get_trips():
     return trips
 @api.route("/trips",methods=["POST"])
 def create_trip():
-    trip=create_trip_service(request.get_json())
-    return trip
+    trip_or_error=create_trip_service(request.get_json())
+    return trip_or_error
 @api.route("/trips/<int:trip_id>",methods=["GET"])
 def get_trip(trip_id):
-    trip=get_trip_service(trip_id)
-    return trip
+    trip_or_error=get_trip_service(trip_id)
+    return trip_or_error
+@api.route("/trips/<int:trip_id>",methods=["PUT"])
+def update_trip(trip_id):
+    trip_or_error=update_trip_service(trip_id)
+    return trip_or_error
