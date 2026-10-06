@@ -1,7 +1,7 @@
 from datetime import datetime
 from math import isfinite
 from flask import jsonify
-
+from app.models import TripStatus
 def validate_date(body, field_name):
     value = body[field_name]
     if not isinstance(value, str) or not value.strip():
@@ -57,7 +57,7 @@ def validate_start_end_date(data):
     start_date=datetime.strptime(data["start_date"].strip(), "%Y-%m-%d").date()
     end_date=datetime.strptime(data["end_date"].strip(), "%Y-%m-%d").date()
     if end_date < start_date:
-    return jsonify({"error": "end_date must be on or after start_date"}), 400
+        return jsonify({"error": "end_date must be on or after start_date"}), 400
     return None
     
 def validate_create_trip(data):
@@ -68,18 +68,83 @@ def validate_create_trip(data):
         "budget",
         "max_travelers"
         ])
-    if(missing_fields_error!=None):
+    if missing_fields_error!=None:
         return missing_fields_error
     destination_error=validate_text(data,"destination",120)
-    if(destination_error is not None):
+    if destination_error is not None:
         return destination_error
     date_error=validate_start_end_date(data)
-    if(date_error is not None):
+    if date_error is not None:
         return date_error
     budget_error=validate_positive_number(data,"budget")
-    if(budget_error is not None):
+    if budget_error is not None:
         return budget_error
     max_travelers_error=validate_positive_int(data,"max_travelers")
     if(max_travelers_error is not None):
         return max_travelers_error
+    return None
+def validate_update_trip(data):
+    checks_applied=0
+    if "destination" in data:
+        checks_applied+=1
+        destination_error=validate_text(data,"destination",120)
+        if destination_error is not None:
+            return destination_error
+    if "start_date" in data:
+        checks_applied+=1
+        start_date_error=validate_date(data,"start_date")
+        if start_date_error is not None:
+            return start_date_error
+    if "end_date" in data:
+        checks_applied+=1
+        end_date_error=validate_date(data,"end_date")
+        if end_date_error is not None:
+            return end_date_error
+    if "budget" in data:
+        checks_applied+=1
+        budget_error=validate_positive_number(data,"budget")
+        if budget_error is not None:
+            return budget_error
+    if "max_travelers" in data:
+        checks_applied+=1
+        max_travelers_error=validate_positive_int(data,"max_travelers")
+        if max_travelers_error is not None:
+            return max_travelers_error
+    if "status" in data:
+        checks_applied+=1
+    if checks_applied==0:
+        return jsonify({"error":"Request body must be a non-empty JSON object"}),400
+    return None
+
+def validate_update_trip_time(data,existing):
+    if "start_date" in data or "end_date" in data:
+        start=None
+        end=None
+        if "start_date" in data:
+            start=datetime.strptime(data["start_date"].strip(),"%Y-%m-%d").date()
+        else:
+            start=existing.start_date
+        if "end_date" in data:
+            end=datetime.strptime(data["end_date"].strip(),"%Y-%m-%d").date()
+        else:
+            end=existing.end_date
+        if start is not None and end is not None and end<start:
+            return jsonify({"error":"end_date must be on or after start_date"}),400
+    return None
+def validate_update_trip_status(data,existing):
+    status=data["status"]
+    if status != TripStatus.planned.value and status != TripStatus.ongoing.value and status != TripStatus.completed.value and status != TripStatus.cancelled.value :
+        return jsonify({"error": f"invalid status : status must be from [{TripStatus.planned.value} , {TripStatus.ongoing.value} , {TripStatus.completed.value} , {TripStatus.cancelled.value}]"}), 400
+    if status== TripStatus.planned.value:
+        if existing.status != TripStatus.planned.value:
+            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),400
+    if status== TripStatus.ongoing.value:
+        if existing.status != TripStatus.planned.value:
+            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),400
+    if status== TripStatus.completed.value:
+        if existing.status != TripStatus.ongoing.value:
+            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),400
+    if status== TripStatus.cancelled.value:
+        if existing.status == TripStatus.completed.value :
+            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),400
     return None
