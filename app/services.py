@@ -55,3 +55,11 @@ def update_trip_service(trip_id,data):
         trip.max_travelers=data["max_travelers"]
     db.session.commit()
     return jsonify(trip.to_dict()),200
+
+def delete_trip_service(trip_id):
+    trip=db.session.get(Trip,trip_id)
+    if trip is None:
+        return jsonify({"error":"Trip not found"}),404
+    db.session.delete(trip)
+    db.session.commit()
+    return jsonify({"message":"Trip deleted successfully"}),200

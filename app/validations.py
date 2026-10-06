@@ -137,14 +137,14 @@ def validate_update_trip_status(data,existing):
         return jsonify({"error": f"invalid status : status must be from [{TripStatus.planned.value} , {TripStatus.ongoing.value} , {TripStatus.completed.value} , {TripStatus.cancelled.value}]"}), 400
     if status== TripStatus.planned.value:
         if existing.status != TripStatus.planned.value:
-            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),400
+            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),409
     if status== TripStatus.ongoing.value:
         if existing.status != TripStatus.planned.value:
-            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),400
+            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),409
     if status== TripStatus.completed.value:
         if existing.status != TripStatus.ongoing.value:
-            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),400
+            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),409
     if status== TripStatus.cancelled.value:
         if existing.status == TripStatus.completed.value :
-            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),400
+            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),409
     return None
