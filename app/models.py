@@ -18,19 +18,26 @@ def enable_sqlite_foreign_keys(dbapi_connection,connection_record):
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
 
-class Traveller(db.Model):
-    __tablename__="travellers"
-    id = db.Column(db.Integer,primary_key=True)
+class Traveler(db.Model):
+    __tablename__="travelers"
+    email = db.Column(db.String(120),nullable=False,unique=True,primary_key=True)
     name = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(120),nullable=False,unique=True)
-    memberships = db.relationship("TripTraveller",back_populates="traveller",cascade="all, delete-orphan")
+    trips = db.relationship("TripTraveler",back_populates="traveler",cascade="all, delete-orphan")
+
+    def can_join_trip(self,new_trip):
+        for membership in self.trips:
+            trip = membership.trip
+            if trip.status == TripStatus.cancelled.value:
+                continue
+            if trip.start_date <= new_trip.end_date and new_trip.start_date <= trip.end_date:
+                return False
+        return True
 
     def __repr__(self):
-        return f"<Traveller {self.id}>"
+        return f"<Traveler {self.email}>"
 
     def to_dict(self):
         return {
-            "id": self.id,
             "name":self.name,
             "email":self.email
         }
@@ -50,25 +57,25 @@ class Trip(db.Model):
     budget = db.Column(db.Float, nullable=False)
     max_travelers = db.Column(db.Integer, nullable=False)
     status = db.Column(db.String(20), nullable=False, default=TripStatus.planned.value)
-    memberships = db.relationship("TripTraveller",back_populates="trip",cascade="all, delete-orphan")
+    travelers = db.relationship("TripTraveler",back_populates="trip",cascade="all, delete-orphan")
     expenses = db.relationship("Expense",back_populates="trip",cascade="all, delete-orphan")
 
-    @property
     def can_update_max(self,update):
-        return len(self.memberships)<=update
-        
+        return len(self.travelers)<=update
+
     def is_full(self):
-        return len(self.memberships) >= self.max_travelers
+        return len(self.travelers) >= self.max_travelers
 
     def total_expenses(self):
         return round(sum(expense.amount for expense in self.expenses),6)
 
     def can_add_expense(self,amount):
-        return round(self.total_expenses + amount,6) <= self.budget
+        return round(self.total_expenses() + amount,6) <= self.budget
+
     def __repr__(self):
         return f"<Trip {self.id}>"
 
-    def to_dict(self,include_travellers=False):
+    def to_dict(self,include_travelers=False):
         data = {
             "id": self.id,
             "destination":self.destination,
@@ -78,26 +85,26 @@ class Trip(db.Model):
             "max_travelers":self.max_travelers,
             "status":self.status
         }
-        if include_travellers:
-            data["travellers"] = [m.traveller.to_dict() for m in self.memberships]
+        if include_travelers:
+            data["travelers"] = [m.traveler.to_dict() for m in self.travelers]
         return data
 
-class TripTraveller(db.Model):
-    __tablename__ = "trip_travellers"
+class TripTraveler(db.Model):
+    __tablename__ = "trip_travelers"
 
     trip_id = db.Column(db.Integer,db.ForeignKey("trips.id",ondelete="CASCADE"),primary_key=True)
-    traveller_id = db.Column(db.Integer,db.ForeignKey("travellers.id",ondelete="CASCADE"),primary_key=True)
+    traveler_email = db.Column(db.String(120),db.ForeignKey("travelers.email",ondelete="CASCADE"),primary_key=True)
     joined_at = db.Column(db.DateTime, server_default=db.func.now())
-    trip = db.relationship("Trip",back_populates="memberships")
-    traveller = db.relationship("Traveller",back_populates="memberships")
+    trip = db.relationship("Trip",back_populates="travelers")
+    traveler = db.relationship("Traveler",back_populates="trips")
 
     def __repr__(self):
-        return f"<TripTraveller trip={self.trip_id} traveller={self.traveller_id}>"
+        return f"<TripTraveler trip={self.trip_id} traveler={self.traveler_email}>"
 
     def to_dict(self):
         return {
             "trip_id":self.trip_id,
-            "traveller_id":self.traveller_id,
+            "traveler_email":self.traveler_email,
             "joined_at":self.joined_at.isoformat() if self.joined_at else None
         }
 

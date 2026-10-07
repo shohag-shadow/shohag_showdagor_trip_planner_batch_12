@@ -2,6 +2,7 @@ from datetime import datetime
 from math import isfinite
 from flask import jsonify
 from app.models import TripStatus
+from re import fullmatch
 def validate_date(body, field_name):
     value = body[field_name]
     if not isinstance(value, str) or not value.strip():
@@ -47,6 +48,28 @@ def validate_missing_field(data,required_fields):
             "missing": missing_fields
         }), 400
     return None
+
+
+
+def validate_email(data, field_name):
+    value = data[field_name]
+
+    if not isinstance(value, str) or not value.strip():
+        return jsonify({
+            "error": f"{field_name} must be a valid email address"
+        }), 400
+
+    value = value.strip()
+
+    email_pattern = r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+
+    if not fullmatch(email_pattern, value):
+        return jsonify({
+            "error": f"{field_name} must be a valid email address"
+        }), 400
+
+    return None
+
 def validate_start_end_date(data):
     start_date_error=validate_date(data,"start_date")
     if(start_date_error is not None):
@@ -155,4 +178,10 @@ def validate_max_trip_travelers(data,existing):
     if "max_travelers" in data:
         if not existing.can_update_max(data["max_travelers"]):
             return jsonify({"error":f"cannot set max traveller below the number of travellers already assigned in this trip"}),409
+    return None
+
+def validate_traveler(data):
+    missing_field_error=validate_missing_field(data,["email","name"])
+    if missing_field_error is not None:
+        return missing_field_error
     return None

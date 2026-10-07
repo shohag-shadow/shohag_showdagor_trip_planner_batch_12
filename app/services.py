@@ -1,7 +1,8 @@
-from app.models import db,Trip,TripStatus
+from app.models import db,Trip,TripStatus,Traveler,TripTraveler
 from flask import jsonify
 from datetime import datetime
-from app.validations import validate_create_trip,validate_update_trip,validate_update_trip_time,validate_update_trip_status,validate_max_trip_travelers
+from app.validations import validate_create_trip,validate_update_trip,validate_update_trip_time,validate_update_trip_status,validate_max_trip_travelers,validate_traveler
+
 def get_trips_service():
     trips=Trip.query.all()
     return jsonify([trip.to_dict() for trip in trips]),200
@@ -24,7 +25,7 @@ def get_trip_service(trip_id):
     trip=db.session.get(Trip,trip_id)
     if trip is None:
         return jsonify({"error":"Trip not found"}),404
-    return jsonify(trip.to_dict()),200
+    return jsonify(trip.to_dict(True)),200
 
 
 
@@ -57,7 +58,7 @@ def update_trip_service(trip_id,data):
     if "max_travelers" in data:
         trip.max_travelers=data["max_travelers"]
     db.session.commit()
-    return jsonify(trip.to_dict()),200
+    return jsonify(trip.to_dict(True)),200
 
 def delete_trip_service(trip_id):
     trip=db.session.get(Trip,trip_id)
@@ -66,3 +67,32 @@ def delete_trip_service(trip_id):
     db.session.delete(trip)
     db.session.commit()
     return jsonify({"message":"Trip deleted successfully"}),200
+
+def add_traveler_service(trip_id,data):
+    trip=db.session.get(Trip,trip_id)
+    if trip is None:
+        return jsonify({"error":"Trip not found"}),404
+    if trip.is_full():
+        return jsonify({"error":"Trip is full"}),409
+    traveler_validation_error=validate_traveler(data)
+    if traveler_validation_error is not None:
+        return traveler_validation_error
+    email=data["email"].strip()
+    name=data["name"].strip()
+    traveler=db.session.get(Traveler,email)
+    if traveler is None:
+        traveler=Traveler(email=email,name=name)
+        db.session.add(traveler)
+    else:
+        if traveler.name != name:
+            return jsonify({"error":"already a traveler exist with the same email and a different name"}),409
+    trip_traveler=db.session.get(TripTraveler,(trip.id,traveler.email))
+    if trip_traveler is None:
+        if not traveler.can_join_trip(trip):
+            return jsonify({"error":"Traveler already has an overlapping trip"}),409
+        trip_traveler=TripTraveler(trip_id=trip.id,traveler_email=traveler.email)
+        db.session.add(trip_traveler)
+    else:
+        return jsonify({"error":"Cannot add the same traveler to a trip twice"}),409
+    db.session.commit()
+    return jsonify(trip.to_dict(True)),201
