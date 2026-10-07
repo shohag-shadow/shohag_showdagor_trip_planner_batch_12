@@ -132,8 +132,10 @@ def validate_update_trip_time(data,existing):
             return jsonify({"error":"end_date must be on or after start_date"}),400
     return None
 def validate_update_trip_status(data,existing):
+    if "status" not in data:
+        return None
     status=data["status"]
-    if status != TripStatus.planned.value and status != TripStatus.ongoing.value and status != TripStatus.completed.value and status != TripStatus.cancelled.value :
+    if status not in [TripStatus.planned.value,TripStatus.ongoing.value,TripStatus.completed.value,TripStatus.cancelled.value]:
         return jsonify({"error": f"invalid status : status must be from [{TripStatus.planned.value} , {TripStatus.ongoing.value} , {TripStatus.completed.value} , {TripStatus.cancelled.value}]"}), 400
     if status== TripStatus.planned.value:
         if existing.status != TripStatus.planned.value:
@@ -147,4 +149,10 @@ def validate_update_trip_status(data,existing):
     if status== TripStatus.cancelled.value:
         if existing.status == TripStatus.completed.value :
             return jsonify({"error":f"cannot set status {existing.status} to {status}"}),409
+    return None
+
+def validate_max_trip_travelers(data,existing):
+    if "max_travelers" in data:
+        if not existing.can_update_max(data["max_travelers"]):
+            return jsonify({"error":f"cannot set max traveller below the number of travellers already assigned in this trip"}),409
     return None

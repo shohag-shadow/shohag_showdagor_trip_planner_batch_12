@@ -54,9 +54,12 @@ class Trip(db.Model):
     expenses = db.relationship("Expense",back_populates="trip",cascade="all, delete-orphan")
 
     @property
+    def can_update_max(self,update):
+        return len(self.memberships)<=update
+        
     def is_full(self):
         return len(self.memberships) >= self.max_travelers
-        
+
     def total_expenses(self):
         return round(sum(expense.amount for expense in self.expenses),6)
 

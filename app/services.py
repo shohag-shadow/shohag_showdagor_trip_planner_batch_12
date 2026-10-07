@@ -1,7 +1,7 @@
 from app.models import db,Trip,TripStatus
 from flask import jsonify
 from datetime import datetime
-from app.validations import validate_create_trip,validate_update_trip,validate_update_trip_time,validate_update_trip_status
+from app.validations import validate_create_trip,validate_update_trip,validate_update_trip_time,validate_update_trip_status,validate_max_trip_travelers
 def get_trips_service():
     trips=Trip.query.all()
     return jsonify([trip.to_dict() for trip in trips]),200
@@ -27,7 +27,7 @@ def get_trip_service(trip_id):
     return jsonify(trip.to_dict()),200
 
 
-#todo:add validation for updating max_travelers based on number of travellers in a plan after adding travellers model
+
 def update_trip_service(trip_id,data):
     validation_error=validate_update_trip(data)
     if(validation_error is not None):
@@ -38,10 +38,13 @@ def update_trip_service(trip_id,data):
     update_time_error=validate_update_trip_time(data,trip)
     if update_time_error is not None:
         return update_time_error
+    max_traveler_error=validate_max_trip_travelers(data,trip)
+    if max_traveler_error is not None:
+        return max_traveler_error
+    update_status_error=validate_update_trip_status(data,trip)
+    if update_status_error is not None:
+        return update_status_error
     if "status" in data:
-        update_status_error=validate_update_trip_status(data,trip)
-        if update_status_error is not None:
-            return update_status_error
         trip.status=data["status"].strip().upper()
     if "destination" in data:
         trip.destination=data["destination"].strip()
