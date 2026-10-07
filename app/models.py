@@ -51,11 +51,17 @@ class Trip(db.Model):
     max_travelers = db.Column(db.Integer, nullable=False)
     status = db.Column(db.String(20), nullable=False, default=TripStatus.planned.value)
     memberships = db.relationship("TripTraveller",back_populates="trip",cascade="all, delete-orphan")
+    expenses = db.relationship("Expense",back_populates="trip",cascade="all, delete-orphan")
 
     @property
     def is_full(self):
         return len(self.memberships) >= self.max_travelers
+        
+    def total_expenses(self):
+        return round(sum(expense.amount for expense in self.expenses),6)
 
+    def can_add_expense(self,amount):
+        return round(self.total_expenses + amount,6) <= self.budget
     def __repr__(self):
         return f"<Trip {self.id}>"
 
@@ -90,4 +96,24 @@ class TripTraveller(db.Model):
             "trip_id":self.trip_id,
             "traveller_id":self.traveller_id,
             "joined_at":self.joined_at.isoformat() if self.joined_at else None
+        }
+
+class Expense(db.Model):
+    __tablename__ = "expenses"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(120), nullable=False)
+    trip_id = db.Column(db.Integer,db.ForeignKey("trips.id",ondelete="CASCADE"),nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    trip = db.relationship("Trip",back_populates="expenses")
+
+    def __repr__(self):
+        return f"<Expense {self.id}>"
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "title":self.title,
+            "trip_id":self.trip_id,
+            "amount":self.amount
         }
