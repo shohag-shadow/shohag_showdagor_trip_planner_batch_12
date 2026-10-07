@@ -5,6 +5,8 @@ from app.models import TripStatus
 from re import fullmatch
 def validate_date(body, field_name):
     value = body[field_name]
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", value):
+        return jsonify({"error": f"{field_name} must be in YYYY-MM-DD format"}), 400
     if not isinstance(value, str) or not value.strip():
         return jsonify({"error": f"{field_name} must be a string in YYYY-MM-DD format"}), 400
     value = value.strip()
@@ -53,21 +55,16 @@ def validate_missing_field(data,required_fields):
 
 def validate_email(data, field_name):
     value = data[field_name]
-
     if not isinstance(value, str) or not value.strip():
         return jsonify({
             "error": f"{field_name} must be a valid email address"
         }), 400
-
     value = value.strip()
-
     email_pattern = r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
-
     if not fullmatch(email_pattern, value):
         return jsonify({
             "error": f"{field_name} must be a valid email address"
         }), 400
-
     return None
 
 def validate_start_end_date(data):
