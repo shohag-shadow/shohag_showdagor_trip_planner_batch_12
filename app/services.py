@@ -142,3 +142,15 @@ def update_trip_status_service(trip_id,data):
     trip.status=data["status"].strip().upper()
     db.session.commit()
     return jsonify(trip.to_dict()), 200
+
+def get_trip_summary_service(trip_id):
+    trip=db.session.get(Trip,trip_id)
+    if trip is None:
+        return jsonify({"error":"TRIP_NOT_FOUND","message":"Trip not found"}),404
+    travelers_count=len(trip.travelers)
+    return jsonify({
+        "traveler_count":travelers_count,
+        "available_seats":trip.max_travelers-travelers_count,
+        "total_expense":trip.total_expenses(),
+        "remaining_budget":trip.remaining_budget()
+    }),200

@@ -4,7 +4,7 @@ from flask import jsonify
 from app.models import TripStatus
 from re import fullmatch
 def validate_date(body, field_name):
-    value = body[field_name]
+    value = body[field_name].strip()
     if not isinstance(value, str) or not value.strip():
         return jsonify({"error": "INVALID_DATE_TYPE", "message": f"{field_name} must be a string in YYYY-MM-DD format"}), 400
     if not fullmatch(r"\d{4}-\d{2}-\d{2}", value):
