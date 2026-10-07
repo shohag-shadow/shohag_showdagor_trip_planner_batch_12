@@ -20,7 +20,8 @@ def enable_sqlite_foreign_keys(dbapi_connection,connection_record):
 
 class Traveler(db.Model):
     __tablename__="travelers"
-    email = db.Column(db.String(120),nullable=False,unique=True,primary_key=True)
+    id = db.Column(db.Integer,primary_key=True,autoincrement=True)
+    email = db.Column(db.String(120),nullable=False,unique=True)
     name = db.Column(db.String(120), nullable=False)
     trips = db.relationship("TripTraveler",back_populates="traveler",cascade="all, delete-orphan")
 
@@ -34,10 +35,11 @@ class Traveler(db.Model):
         return True
 
     def __repr__(self):
-        return f"<Traveler {self.email}>"
+        return f"<Traveler {self.id}>"
 
     def to_dict(self):
         return {
+            "id":self.id,
             "name":self.name,
             "email":self.email
         }
@@ -93,18 +95,18 @@ class TripTraveler(db.Model):
     __tablename__ = "trip_travelers"
 
     trip_id = db.Column(db.Integer,db.ForeignKey("trips.id",ondelete="CASCADE"),primary_key=True)
-    traveler_email = db.Column(db.String(120),db.ForeignKey("travelers.email",ondelete="CASCADE"),primary_key=True)
+    traveler_id = db.Column(db.Integer,db.ForeignKey("travelers.id",ondelete="CASCADE"),primary_key=True)
     joined_at = db.Column(db.DateTime, server_default=db.func.now())
     trip = db.relationship("Trip",back_populates="travelers")
     traveler = db.relationship("Traveler",back_populates="trips")
 
     def __repr__(self):
-        return f"<TripTraveler trip={self.trip_id} traveler={self.traveler_email}>"
+        return f"<TripTraveler trip={self.trip_id} traveler={self.traveler_id}>"
 
     def to_dict(self):
         return {
             "trip_id":self.trip_id,
-            "traveler_email":self.traveler_email,
+            "traveler_id":self.traveler_id,
             "joined_at":self.joined_at.isoformat() if self.joined_at else None
         }
 

@@ -1,5 +1,5 @@
 from flask import Blueprint, request
-from app.services import get_trips_service,create_trip_service,get_trip_service,update_trip_service,delete_trip_service,add_traveler_service
+from app.services import get_trips_service,create_trip_service,get_trip_service,update_trip_service,delete_trip_service,add_traveler_service,remove_traveler_service
 api = Blueprint("api", __name__, url_prefix="/api/v1")
 
 @api.route("/trips",methods=["GET"])
@@ -20,9 +20,13 @@ def update_trip(trip_id):
     return trip_or_error
 @api.route("/trips/<int:trip_id>",methods=["DELETE"])
 def delete_trip(trip_id):
-    trip_or_error=delete_trip_service(trip_id)
-    return trip_or_error
+    deleted_or_error=delete_trip_service(trip_id)
+    return deleted_or_error
 @api.route("/trips/<int:trip_id>/travelers",methods=["POST"])
 def add_traveler(trip_id):
     traveler_or_error=add_traveler_service(trip_id,request.get_json())
     return traveler_or_error
+@api.route("/trips/<int:trip_id>/travelers/<int:traveler_id>",methods=["DELETE"])
+def remove_traveler(trip_id,traveler_id):
+    removed_or_error=remove_traveler_service(trip_id,traveler_id)
+    return removed_or_error

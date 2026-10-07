@@ -79,20 +79,38 @@ def add_traveler_service(trip_id,data):
         return traveler_validation_error
     email=data["email"].strip()
     name=data["name"].strip()
-    traveler=db.session.get(Traveler,email)
+    traveler=db.session.execute(db.select(Traveler).filter_by(email=email)).scalar_one_or_none()
     if traveler is None:
         traveler=Traveler(email=email,name=name)
         db.session.add(traveler)
+        db.session.flush()
     else:
         if traveler.name != name:
-            return jsonify({"error":"already a traveler exist with the same email and a different name"}),409
-    trip_traveler=db.session.get(TripTraveler,(trip.id,traveler.email))
+            return jsonify({"error":f"already a traveler exist with the same email and a different name:{traveler.name}"}),409
+    trip_traveler=db.session.get(TripTraveler,(trip.id,traveler.id))
     if trip_traveler is None:
         if not traveler.can_join_trip(trip):
             return jsonify({"error":"Traveler already has an overlapping trip"}),409
-        trip_traveler=TripTraveler(trip_id=trip.id,traveler_email=traveler.email)
+        trip_traveler=TripTraveler(trip_id=trip.id,traveler_id=traveler.id)
         db.session.add(trip_traveler)
     else:
         return jsonify({"error":"Cannot add the same traveler to a trip twice"}),409
     db.session.commit()
     return jsonify(trip.to_dict(True)),201
+
+def remove_traveler_service(trip_id,traveler_id):
+    trip=db.session.get(Trip,trip_id)
+    if trip is None:
+        return jsonify({"error":"Trip not found"}),404
+    traveler=db.session.get(Traveler,traveler_id)
+    if traveler is None:
+        return jsonify({"error":"Traveler not found"}),404
+    trip_traveler=db.session.get(TripTraveler,(trip.id,traveler.id))
+    if trip_traveler is None:
+        return jsonify({"error":"Invalid delete,traveler is not in the trip"}),404
+    db.session.delete(trip_traveler)
+    db.session.flush()
+    if len(traveler.trips)==0:
+        db.session.delete(traveler)
+    db.session.commit()
+    return jsonify({"message":"Traveler removed successfully"}),200
