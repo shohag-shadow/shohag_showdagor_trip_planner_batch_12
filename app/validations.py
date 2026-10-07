@@ -130,8 +130,6 @@ def validate_update_trip(data):
         max_travelers_error=validate_positive_int(data,"max_travelers")
         if max_travelers_error is not None:
             return max_travelers_error
-    if "status" in data:
-        checks_applied+=1
     if checks_applied==0:
         return jsonify({"error":"Request body must be a non-empty JSON object"}),400
     return None
@@ -152,23 +150,24 @@ def validate_update_trip_time(data,existing):
             return jsonify({"error":"end_date must be on or after start_date"}),400
     return None
 def validate_update_trip_status(data,existing):
-    if "status" not in data:
-        return None
-    status=data["status"]
+    missing_field_error=validate_missing_field(data,["status"])
+    if missing_field_error is not None:
+        return missing_field_error
+    status=data["status"].strip().upper()
     if status not in [TripStatus.planned.value,TripStatus.ongoing.value,TripStatus.completed.value,TripStatus.cancelled.value]:
         return jsonify({"error": f"invalid status : status must be from [{TripStatus.planned.value} , {TripStatus.ongoing.value} , {TripStatus.completed.value} , {TripStatus.cancelled.value}]"}), 400
     if status== TripStatus.planned.value:
         if existing.status != TripStatus.planned.value:
-            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),409
+            return jsonify({"error":f"cannot set status from {existing.status} to {status}"}),409
     if status== TripStatus.ongoing.value:
         if existing.status != TripStatus.planned.value:
-            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),409
+            return jsonify({"error":f"cannot set status from {existing.status} to {status}"}),409
     if status== TripStatus.completed.value:
         if existing.status != TripStatus.ongoing.value:
-            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),409
+            return jsonify({"error":f"cannot set status from {existing.status} to {status}"}),409
     if status== TripStatus.cancelled.value:
         if existing.status == TripStatus.completed.value :
-            return jsonify({"error":f"cannot set status {existing.status} to {status}"}),409
+            return jsonify({"error":f"cannot set status from {existing.status} to {status}"}),409
     return None
 
 def validate_max_trip_travelers(data,existing):

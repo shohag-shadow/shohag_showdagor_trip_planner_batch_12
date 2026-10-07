@@ -42,11 +42,6 @@ def update_trip_service(trip_id,data):
     max_traveler_error=validate_max_trip_travelers(data,trip)
     if max_traveler_error is not None:
         return max_traveler_error
-    update_status_error=validate_update_trip_status(data,trip)
-    if update_status_error is not None:
-        return update_status_error
-    if "status" in data:
-        trip.status=data["status"].strip().upper()
     if "destination" in data:
         trip.destination=data["destination"].strip()
     if "start_date" in data:
@@ -132,3 +127,14 @@ def add_trip_expenses_service(trip_id,data):
     db.session.add(expense)
     db.session.commit()
     return jsonify(expense.to_dict()), 201
+
+def update_trip_status_service(trip_id,data):
+    trip=db.session.get(Trip,trip_id)
+    if trip is None:
+        return jsonify({"error":"Trip not found"}),404
+    update_status_error=validate_update_trip_status(data,trip)
+    if update_status_error is not None:
+        return update_status_error
+    trip.status=data["status"].strip().upper()
+    db.session.commit()
+    return jsonify(trip.to_dict()), 201
