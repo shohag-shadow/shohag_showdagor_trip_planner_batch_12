@@ -101,8 +101,8 @@ def validate_create_trip(data):
         return max_travelers_error
     return None
 def validate_budget_greater_equal_expense(data,existing):
-    if existing.total_expenses()<data["budget"]:
-        return jsonify({"error":"INVALID_BUDGET_AMOUNT","message":f"New budget must be greater than existing expenses.Existing total expenses: {existing.total_expenses()}"}),400
+    if existing.total_expenses()>data["budget"]:
+        return jsonify({"error":"INVALID_BUDGET_AMOUNT","message":f"New budget must be greater than existing expenses.Existing total expenses: {existing.total_expenses()}"}),409
 def validate_update_trip(data):
     checks_applied=0
     if "destination" in data:
