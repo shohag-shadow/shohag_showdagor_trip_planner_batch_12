@@ -114,3 +114,21 @@ def remove_traveler_service(trip_id,traveler_id):
         db.session.delete(traveler)
     db.session.commit()
     return jsonify({"message":"Traveler removed successfully"}),200
+
+def add_trip_expenses_service(trip_id,data):
+    trip=db.session.get(Trip,trip_id)
+    if trip is None:
+        return jsonify({"error":"Trip not found"}),404
+    validation_error=validate_add_trip_expenses(data)
+    if validation_error is not None:
+        return validation_error
+    if not trip.can_add_expense(data["amount"]):
+        return jsonify({"error":f"expense cannot be larger than remaining budget, your remaining budget is {trip.remaining_budget()}"})
+    expense=Expense(
+        title=data["title"].strip(),
+        trip_id=trip.id,
+        amount=data["amount"]
+    )
+    db.session.add(expense)
+    db.session.commit()
+    return jsonify(expense.to_dict()), 201

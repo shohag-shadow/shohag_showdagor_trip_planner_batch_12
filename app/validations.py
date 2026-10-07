@@ -182,3 +182,15 @@ def validate_traveler(data):
     if missing_field_error is not None:
         return missing_field_error
     return None
+
+def validate_add_trip_expenses(data):
+    missing_field_error(data,["title","amount"])
+    if missing_field_error is not None:
+        return missing_field_error
+    title_error=validate_text(data,"title",120)
+    if title_error is not None:
+        return title_error
+    amount_error=validate_positive_number(data,"amount")
+    if amount_error is not None:
+        return amount_error
+    return None

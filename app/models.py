@@ -8,6 +8,8 @@ class TripStatus(Enum):
     ongoing="ONGOING"
     completed="COMPLETED"
     cancelled="CANCELLED"
+
+    
 db = SQLAlchemy()
 
 
@@ -24,7 +26,6 @@ class Traveler(db.Model):
     email = db.Column(db.String(120),nullable=False,unique=True)
     name = db.Column(db.String(120), nullable=False)
     trips = db.relationship("TripTraveler",back_populates="traveler",cascade="all, delete-orphan")
-
     def can_join_trip(self,new_trip):
         for membership in self.trips:
             trip = membership.trip
@@ -33,7 +34,6 @@ class Traveler(db.Model):
             if trip.start_date <= new_trip.end_date and new_trip.start_date <= trip.end_date:
                 return False
         return True
-
     def __repr__(self):
         return f"<Traveler {self.id}>"
 
@@ -64,19 +64,16 @@ class Trip(db.Model):
 
     def can_update_max(self,update):
         return len(self.travelers)<=update
-
     def is_full(self):
         return len(self.travelers) >= self.max_travelers
-
     def total_expenses(self):
         return round(sum(expense.amount for expense in self.expenses),6)
-
+    def remaining_budget(self):
+        return round(self.budget-self.total_expenses(),6)
     def can_add_expense(self,amount):
         return round(self.total_expenses() + amount,6) <= self.budget
-
     def __repr__(self):
         return f"<Trip {self.id}>"
-
     def to_dict(self,include_travelers=False):
         data = {
             "id": self.id,
@@ -93,7 +90,6 @@ class Trip(db.Model):
 
 class TripTraveler(db.Model):
     __tablename__ = "trip_travelers"
-
     trip_id = db.Column(db.Integer,db.ForeignKey("trips.id",ondelete="CASCADE"),primary_key=True)
     traveler_id = db.Column(db.Integer,db.ForeignKey("travelers.id",ondelete="CASCADE"),primary_key=True)
     joined_at = db.Column(db.DateTime, server_default=db.func.now())
