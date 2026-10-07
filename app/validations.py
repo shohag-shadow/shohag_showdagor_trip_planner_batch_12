@@ -100,7 +100,9 @@ def validate_create_trip(data):
     if(max_travelers_error is not None):
         return max_travelers_error
     return None
-
+def validate_budget_greater_equal_expense(data,existing):
+    if existing.total_expenses()<data["budget"]:
+        return jsonify({"error":"INVALID_BUDGET_AMOUNT","message":f"New budget must be greater than existing expenses.Existing total expenses: {existing.total_expenses()}"}),400
 def validate_update_trip(data):
     checks_applied=0
     if "destination" in data:
@@ -147,7 +149,15 @@ def validate_update_trip_time(data,existing):
         if start is not None and end is not None and end<start:
             return jsonify({"error":"INVALID_DATE_RANGE","message":"end_date must be on or after start_date"}),400
     return None
-
+def validate_time_update_for_travelers(trip):
+    travelers_with_overlap=[]
+    for membership in trip.travelers:
+        traveler=membership.traveler
+        if not traveler.can_join_trip(trip):
+            travelers_with_overlap.append(traveler.email)
+    if len(travelers_with_overlap)>0:
+        return jsonify({"error":"DATE_CONFLICT_WITH_TRAVELERS","message":f"date update conflicts with other trips of these travelers: {', '.join(travelers_with_overlap)}"}),409
+    return None
 def validate_update_trip_status(data,existing):
     missing_field_error=validate_missing_field(data,["status"])
     if missing_field_error is not None:

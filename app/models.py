@@ -29,6 +29,8 @@ class Traveler(db.Model):
     def can_join_trip(self,new_trip):
         for membership in self.trips:
             trip = membership.trip
+            if trip.id==new_trip.id:
+                continue
             if trip.status == TripStatus.cancelled.value:
                 continue
             if trip.start_date <= new_trip.end_date and new_trip.start_date <= trip.end_date:
@@ -72,6 +74,8 @@ class Trip(db.Model):
         return round(self.budget-self.total_expenses(),6)
     def can_add_expense(self,amount):
         return round(self.total_expenses() + amount,6) <= self.budget
+    def get_travelers(self):
+        return [people.traveler for people in self.travelers]
     def __repr__(self):
         return f"<Trip {self.id}>"
     def to_dict(self,include_travelers=False):

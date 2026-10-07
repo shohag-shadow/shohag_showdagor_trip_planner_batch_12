@@ -1,7 +1,7 @@
 from app.models import db,Trip,TripStatus,Traveler,TripTraveler,Expense
 from flask import jsonify
 from datetime import datetime
-from app.validations import validate_create_trip,validate_update_trip,validate_update_trip_time,validate_update_trip_status,validate_max_trip_travelers,validate_traveler,validate_add_trip_expenses
+from app.validations import validate_create_trip,validate_update_trip,validate_update_trip_time,validate_update_trip_status,validate_max_trip_travelers,validate_traveler,validate_add_trip_expenses,validate_budget_greater_equal_expense,validate_time_update_for_travelers
 
 def get_trips_service():
     trips=Trip.query.all()
@@ -42,6 +42,9 @@ def update_trip_service(trip_id,data):
     max_traveler_error=validate_max_trip_travelers(data,trip)
     if max_traveler_error is not None:
         return max_traveler_error
+    budget_update_error=validate_budget_greater_equal_expense(data,trip)
+    if budget_update_error is not None:
+        return budget_update_error
     if "destination" in data:
         trip.destination=data["destination"].strip()
     if "start_date" in data:
@@ -52,6 +55,10 @@ def update_trip_service(trip_id,data):
         trip.budget=data["budget"]
     if "max_travelers" in data:
         trip.max_travelers=data["max_travelers"]
+    travelers_time_validation_error=validate_time_update_for_travelers(trip)
+    if travelers_time_validation_error is not None:
+        db.session.rollback()
+        return travelers_time_validation_error
     db.session.commit()
     return jsonify(trip.to_dict(True)),200
 
