@@ -103,7 +103,7 @@ def validate_create_trip(data):
 def validate_budget_greater_equal_expense(data,existing):
     if "budget" not in data:
         return None
-    if existing.total_expenses()>data["budget"]:
+    if round(existing.total_expenses(),6)>round(data["budget"],6):
         return jsonify({"error":"INVALID_BUDGET_AMOUNT","message":f"New budget must be greater than existing expenses.Existing total expenses: {existing.total_expenses()}"}),409
 def validate_update_trip(data):
     checks_applied=0

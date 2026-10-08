@@ -676,3 +676,88 @@ def test_conflict_updating_trip_time_with_traveler(client):
     })
     assert response.status_code == 409
     assert response.get_json()["error"] == "DATE_CONFLICT_WITH_TRAVELERS"
+
+def test_add_invalid_expense(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+    response=client.post(f"/api/v1/trips/{england_trip["id"]}/expenses",json={
+        "title": "kathal",
+        "amount": -4000
+    })
+    response2=response=client.post(f"/api/v1/trips/{england_trip["id"]}/expenses",json={
+        "title": "kathal",
+        "amount": 0
+    })
+    assert response.status_code == 400
+    assert response2.status_code == 400
+
+def test_expense_exceeding_budget(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+    response=client.post(f"/api/v1/trips/{england_trip["id"]}/expenses",json={
+        "title": "kathal",
+        "amount": 30000
+    })
+    response2=client.post(f"/api/v1/trips/{england_trip["id"]}/expenses",json={
+        "title": "chanda",
+        "amount": 1
+    })
+    assert response.status_code == 201
+    assert response2.status_code == 409
+
+def test_adding_expense_in_invalid_state(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "ONGOING"
+    })
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "completed"
+    })
+    response=client.post(f"/api/v1/trips/{england_trip["id"]}/expenses",json={
+        "title": "kathal",
+        "amount": 30000
+    })
+    assert response.status_code == 409
+    assert response.get_json()["error"] == "INVALID_TRIP_STATE"
+
+def test_updating_budget_below_expenses(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 40000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+    response=client.post(f"/api/v1/trips/{england_trip["id"]}/expenses",json={
+        "title": "kathal",
+        "amount": 30000
+    })
+    response=client.put(f"/api/v1/trips/{england_trip["id"]}",json={
+        "budget": 30000
+    })
+    response2=client.put(f"/api/v1/trips/{england_trip["id"]}",json={
+        "budget": 20000
+    })
+    assert response.status_code == 200
+    assert response2.status_code == 409
+    assert response2.get_json()["error"] == "INVALID_BUDGET_AMOUNT"

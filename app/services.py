@@ -131,7 +131,7 @@ def add_trip_expenses_service(trip_id,data):
     if validation_error is not None:
         return validation_error
     if trip.status not in [TripStatus.planned.value,TripStatus.ongoing.value]:
-        return jsonify({"error":"EXPENSE_NOT_ALLOWED","message":"expense can only be added in planning and ongoing phase of a trip"}),409
+        return jsonify({"error":"INVALID_TRIP_STATE","message":"expense can only be added in planning and ongoing phase of a trip"}),409
     if not trip.can_add_expense(data["amount"]):
         return jsonify({"error":"EXPENSE_EXCEEDS_BUDGET","message":f"expense cannot be larger than remaining budget, your remaining budget is {trip.remaining_budget()}"}),409
     expense=Expense(

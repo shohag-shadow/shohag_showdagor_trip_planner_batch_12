@@ -73,7 +73,7 @@ class Trip(db.Model):
     def remaining_budget(self):
         return round(self.budget-self.total_expenses(),6)
     def can_add_expense(self,amount):
-        return round(self.total_expenses() + amount,6) <= self.budget
+        return round(self.total_expenses() + amount,6) <= round(self.budget,6)
     def get_travelers(self):
         return [people.traveler for people in self.travelers]
     def __repr__(self):
