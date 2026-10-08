@@ -167,6 +167,8 @@ def validate_update_trip_status(data,existing):
     status=data["status"].strip().upper()
     if status not in [TripStatus.planned.value,TripStatus.ongoing.value,TripStatus.completed.value,TripStatus.cancelled.value]:
         return jsonify({"error": "INVALID_STATUS", "message": f"invalid status : status must be from [{TripStatus.planned.value} , {TripStatus.ongoing.value} , {TripStatus.completed.value} , {TripStatus.cancelled.value}]"}), 400
+    if status==existing.status:
+        return None
     if status== TripStatus.planned.value:
         if existing.status != TripStatus.planned.value:
             return jsonify({"error":"INVALID_STATUS_TRANSITION","message":f"cannot set status from {existing.status} to {status}"}),409

@@ -247,7 +247,7 @@ def test_update_trip_time_validation(client):
     assert valid_date_range.get_json()["start_date"] == "2026-10-10"
     assert valid_date_range.get_json()["end_date"] == "2026-10-15"
 
-def test_set_status(client):
+def test_set_invalid_status(client):
     response=client.post("/api/v1/trips",json={
         "destination": "England",
         "start_date": "2026-10-20",
@@ -263,11 +263,198 @@ def test_set_status(client):
     assert invalid_status.status_code == 400
     assert invalid_status.get_json()["error"] == "INVALID_STATUS"
 
-    planned_to_complete=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
-        "status": "completed"
+def test_set_status_planned_to_completed_rejected(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
     })
-    assert planned_to_complete.status_code == 409
-    assert planned_to_complete.get_json()["error"] == "INVALID_STATUS_TRANSITION"
+    england_trip=response.get_json()
+
+    planned_to_completed=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "COMPLETED"
+    })
+    assert planned_to_completed.status_code == 409
+    assert planned_to_completed.get_json()["error"] == "INVALID_STATUS_TRANSITION"
+
+
+
+def test_set_status_ongoing_to_planned_rejected(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "ONGOING"
+    })
+
+    ongoing_to_planned=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "PLANNED"
+    })
+    assert ongoing_to_planned.status_code == 409
+    assert ongoing_to_planned.get_json()["error"] == "INVALID_STATUS_TRANSITION"
+
+
+def test_set_status_completed_to_planned_rejected(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "ONGOING"
+    })
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "COMPLETED"
+    })
+
+    completed_to_planned=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "PLANNED"
+    })
+    assert completed_to_planned.status_code == 409
+    assert completed_to_planned.get_json()["error"] == "INVALID_STATUS_TRANSITION"
+
+
+def test_set_status_completed_to_ongoing_rejected(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "ONGOING"
+    })
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "COMPLETED"
+    })
+
+    completed_to_ongoing=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "ONGOING"
+    })
+    assert completed_to_ongoing.status_code == 409
+    assert completed_to_ongoing.get_json()["error"] == "INVALID_STATUS_TRANSITION"
+
+
+def test_set_status_completed_to_cancelled_rejected(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "ONGOING"
+    })
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "COMPLETED"
+    })
+
+    completed_to_cancelled=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "CANCELLED"
+    })
+    assert completed_to_cancelled.status_code == 409
+    assert completed_to_cancelled.get_json()["error"] == "INVALID_STATUS_TRANSITION"
+
+
+def test_set_status_cancelled_to_planned_rejected(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "CANCELLED"
+    })
+
+    cancelled_to_planned=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "PLANNED"
+    })
+    assert cancelled_to_planned.status_code == 409
+    assert cancelled_to_planned.get_json()["error"] == "INVALID_STATUS_TRANSITION"
+
+
+def test_set_status_cancelled_to_ongoing_rejected(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "CANCELLED"
+    })
+
+    cancelled_to_ongoing=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "ONGOING"
+    })
+    assert cancelled_to_ongoing.status_code == 409
+    assert cancelled_to_ongoing.get_json()["error"] == "INVALID_STATUS_TRANSITION"
+
+
+def test_set_status_cancelled_to_completed_rejected(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "CANCELLED"
+    })
+
+    cancelled_to_completed=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "COMPLETED"
+    })
+    assert cancelled_to_completed.status_code == 409
+    assert cancelled_to_completed.get_json()["error"] == "INVALID_STATUS_TRANSITION"
+
+
+def test_set_status_to_the_same_status(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "CANCELLED"
+    })
+
+    cancelled_to_cancelled=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "CANCELLED"
+    })
+    assert cancelled_to_cancelled.status_code == 200
 
 
 # def test_delete_trip(client):
