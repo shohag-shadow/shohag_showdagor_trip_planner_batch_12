@@ -133,7 +133,7 @@ def validate_update_trip(data):
         if max_travelers_error is not None:
             return max_travelers_error
     if checks_applied==0:
-        return jsonify({"error":"EMPTY_REQUEST_BODY","message":"Request body must be a non-empty JSON object"}),400
+        return jsonify({"error":"NO_VALID_UPDATE","message":"Request body must be a non-empty JSON object"}),400
     return None
 
 def validate_update_trip_time(data,existing):
