@@ -9,3 +9,4 @@ instance/
 .idea/
 .vscode/
 .pytest_cache/
+.coverage

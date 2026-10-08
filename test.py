@@ -523,3 +523,117 @@ def test_update_completed_trip(client):
         "destination":"India"
     })
     assert update_completed_trip.status_code == 409
+
+def test_add_traveler_twice(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+    client.post(f"/api/v1/trips/{england_trip["id"]}/travelers",json={
+        "name":"tini",
+        "email":"tini@plan.com"
+    })
+    second_add=client.post(f"/api/v1/trips/{england_trip["id"]}/travelers",json={
+        "name":"tini",
+        "email":"tini@plan.com"
+    })
+    assert second_add.status_code == 409
+    assert second_add.get_json()["error"] == "TRAVELER_ALREADY_IN_TRIP"
+
+def test_add_traveler_time_error(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+    response=client.post("/api/v1/trips",json={
+        "destination": "Shilong",
+        "start_date": "2026-10-21",
+        "end_date": "2026-10-25",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    shilong_trip=response.get_json()
+    client.post(f"/api/v1/trips/{england_trip["id"]}/travelers",json={
+        "name":"tini",
+        "email":"tini@plan.com"
+    })
+    second_add=client.post(f"/api/v1/trips/{shilong_trip["id"]}/travelers",json={
+        "name":"tini",
+        "email":"tini@plan.com"
+    })
+    assert second_add.status_code == 409
+    assert second_add.get_json()["error"] == "TRAVELER_TRIP_OVERLAP"
+
+def test_add_traveler_trip_full(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "India",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 2
+    })
+    india_trip=response.get_json()
+    client.post(f"/api/v1/trips/{india_trip["id"]}/travelers",json={
+        "name":"apa",
+        "email":"apa@kathal.com"
+    })
+    client.post(f"/api/v1/trips/{india_trip["id"]}/travelers",json={
+        "name":"vaiya",
+        "email":"vaiya@plan.com"
+    })
+    third_person=client.post(f"/api/v1/trips/{india_trip["id"]}/travelers",json={
+        "name":"songbidhan",
+        "email":"songbidhan@shilong.com"
+    })
+    assert third_person.status_code == 409
+    assert third_person.get_json()["error"] == "TRIP_FULL"
+
+def test_update_max_to_less_than_travellers_joined(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "India",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 2
+    })
+    india_trip=response.get_json()
+    client.post(f"/api/v1/trips/{india_trip["id"]}/travelers",json={
+        "name":"apa",
+        "email":"apa@kathal.com"
+    })
+    client.post(f"/api/v1/trips/{india_trip["id"]}/travelers",json={
+        "name":"vaiya",
+        "email":"vaiya@plan.com"
+    })
+    update_max=client.put(f"/api/v1/trips/{india_trip["id"]}",json={
+        "max_travelers" : 1
+    })
+    assert update_max.status_code == 409
+    assert update_max.get_json()["error"] == "MAX_TRAVELERS_BELOW_CURRENT"
+
+def test_traveler_join_after_plan(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "ONGOING"
+    })
+    join_traveler=client.post(f"/api/v1/trips/{england_trip["id"]}/travelers",json={
+        "name":"vaiya",
+        "email":"vaiya@plan.com"
+    })
+    assert join_traveler.status_code == 409
+    assert join_traveler.get_json()["error"] == "TRIP_NOT_PLANNED"
