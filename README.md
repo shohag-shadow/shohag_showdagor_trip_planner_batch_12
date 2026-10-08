@@ -17,9 +17,9 @@ the same validation and the same consistent state.
 
 ## Prerequisites
 
-- **Python 3.10+** with `venv` support (the code uses modern type/`str` f-string
-  syntax).
+- **Python 3.10+** with `venv` support (the code uses modern type/`str` f-string syntax).
 - No database server needed — SQLite is bundled with Python.
+- Git to clone the project (Not reqired if you can download the project as zip from github and unzip it and use it)
 
 ## Run instructions
 Run thease commands in the terminal (linux)
@@ -32,7 +32,7 @@ cd shohag_showdagor_trip_planner_batch_12
 
 If you get "permission denied", run `chmod +x run.sh` first. then run `./run.sh`
 
-## Fresh-clone run instructions (run this command if you already cloned the project)
+## Fresh-clone run instructions (run this command if you already cloned the project or unzipped it from zip)
 
 From the project root:
 
