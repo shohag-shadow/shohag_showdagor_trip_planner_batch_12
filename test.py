@@ -247,3 +247,35 @@ def test_update_trip_time_validation(client):
     assert valid_date_range.get_json()["start_date"] == "2026-10-10"
     assert valid_date_range.get_json()["end_date"] == "2026-10-15"
 
+def test_set_status(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+
+    invalid_status=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "I HAVE A PLAN"
+    })
+    assert invalid_status.status_code == 400
+    assert invalid_status.get_json()["error"] == "INVALID_STATUS"
+
+    planned_to_complete=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "completed"
+    })
+    assert planned_to_complete.status_code == 409
+    assert planned_to_complete.get_json()["error"] == "INVALID_STATUS_TRANSITION"
+
+
+# def test_delete_trip(client):
+#     response=client.post("/api/v1/trips",json={
+#         "destination": "England",
+#         "start_date": "2026-10-20",
+#         "end_date": "2026-10-23",
+#         "budget": 30000,
+#         "max_travelers": 5
+#     })
+#     england_trip=response.get_json()
