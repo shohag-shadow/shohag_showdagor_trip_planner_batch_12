@@ -155,7 +155,7 @@ def test_create_trip_invalid_budget(client):
             "destination": "Cox's Bazar",
             "start_date": "2026-10-12",
             "end_date": "2026-10-23",
-            "budget": 0000,
+            "budget": 0,
             "max_travelers": 5
         })
         

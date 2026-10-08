@@ -19,17 +19,27 @@ the same validation and the same consistent state.
 
 - **Python 3.10+** with `venv` support (the code uses modern type/`str` f-string
   syntax).
-- `bash` to run `./run.sh` (Linux / macOS, or Windows via Git Bash).
 - No database server needed — SQLite is bundled with Python.
 
-## Fresh-clone run instructions
+## Run instructions
+Run thease commands in the terminal (linux)
+
+```bash
+git clone https://github.com/shohag-shadow/shohag_showdagor_trip_planner_batch_12.git
+cd shohag_showdagor_trip_planner_batch_12
+./run.sh
+```
+
+If you get "permission denied", run `chmod +x run.sh` first. then run `./run.sh`
+
+## Fresh-clone run instructions (run this command if you already cloned the project)
 
 From the project root:
 
 ```bash
-chmod +x run.sh   # only if the executable bit is missing
 ./run.sh
 ```
+If you get "permission denied", run `chmod +x run.sh` first.  
 
 `run.sh` performs the full bootstrap, then starts the server:
 
@@ -70,13 +80,13 @@ Environment variables (see `.env.example`):
 
 | Variable        | Default            | Purpose                                   |
 | --------------- | ------------------ | ----------------------------------------- |
-| `FLASK_DEBUG`   | `False`            | Enables Flask debug/reloader when `True`. |
+| `FLASK_DEBUG`   | `True`            | Enables Flask debug/reloader when `True`. |
 | `DATABASE_NAME` | `trip_planner.db`  | SQLite file name inside `instance/`.      |
 | `PORT`          | `5000`             | Port the dev server binds to.             |
 
 ## API endpoint table
 
-Base URL: `http://localhost:5000`. All API routes are prefixed with `/api/v1`.
+Base URL: `http://localhost:5000`. All API routes are prefixed with `/api/v1`. All id are `integer` type
 
 | Method   | Path                                        | Description                              | Success | Common errors |
 | -------- | ------------------------------------------- | ---------------------------------------- | ------- | ------------- |
@@ -291,7 +301,7 @@ PLANNED ──▶ ONGOING ──▶ COMPLETED
 
 The same core invariants are also enforced at the database level via
 `CHECK` constraints (`end_date >= start_date`, `max_travelers > 0`,
-`budget >= 0`) and foreign keys.
+`budget > 0`) and foreign keys.
 
 ## Project structure
 
@@ -314,8 +324,10 @@ The same core invariants are also enforced at the database level via
 └── test.py               # pytest suite (in-memory SQLite)
 ```
 
-Layers: **routes → services → validations → models**. Routes stay thin; all
-business rules and validation live in the service/validation layer.
+Layers: 
+
+**routes → services → validations , models**. Routes stay thin; all
+business rules and validation live in the service/validation and model layer.
 
 ## How SQLite is initialized & stored
 
@@ -342,11 +354,6 @@ business rules and validation live in the service/validation layer.
 - **SQLite only** — a single local file, not intended for concurrent,
   high-write production workloads.
 - **No pagination or filtering** on `GET /api/v1/trips`; it returns everything.
-- **Trips always start as `PLANNED`** and status cannot be set at creation time.
 - **Expenses are append-only** — there is no endpoint to list, edit, or delete
   expenses, and `GET /trips/<id>` does not include them.
-- **Money uses SQLite `REAL` (floating point)**, not a decimal type; comparisons
-  round to 6 decimals to reduce floating-point drift.
-- **`PUT` is a partial update** (PATCH-like semantics) despite the verb/route.
-- No CORS configuration is included, so browser clients on another origin need
-  a proxy or additional setup.
+
