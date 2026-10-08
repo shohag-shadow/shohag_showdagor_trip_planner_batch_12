@@ -22,7 +22,7 @@ def validate_positive_number(body, field_name):
     if isinstance(value, bool) or not isinstance(value, (int, float)):
         return jsonify({"error": "INVALID_NUMBER", "message": f"{field_name} must be a number"}), 400
     if not isfinite(value) or value <= 0:
-        return jsonify({"error": "NUMBER_NOT_POSITIVE", "message": f"{field_name} must be a positive number"}), 400
+        return jsonify({"error": "NUMBER_NOT_POSITIVE", "message": f"{field_name} must be a positive number greater then zero"}), 400
     return None
 
 def validate_text(body, field_name, max_length=None):
@@ -39,7 +39,7 @@ def validate_positive_int(body, field_name):
     if isinstance(value, bool) or not isinstance(value, int):
         return jsonify({"error": "INVALID_INTEGER", "message": f"{field_name} must be an integer"}), 400
     if value <= 0:
-        return jsonify({"error": "INTEGER_NOT_POSITIVE", "message": f"{field_name} must be a positive integer"}), 400
+        return jsonify({"error": "INTEGER_NOT_POSITIVE", "message": f"{field_name} must be a positive integer greater then zero"}), 400
     return None
 
 def validate_missing_field(data,required_fields):
