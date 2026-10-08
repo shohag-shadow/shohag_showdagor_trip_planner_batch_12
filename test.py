@@ -457,12 +457,30 @@ def test_set_status_to_the_same_status(client):
     assert cancelled_to_cancelled.status_code == 200
 
 
-# def test_delete_trip(client):
-#     response=client.post("/api/v1/trips",json={
-#         "destination": "England",
-#         "start_date": "2026-10-20",
-#         "end_date": "2026-10-23",
-#         "budget": 30000,
-#         "max_travelers": 5
-#     })
-#     england_trip=response.get_json()
+def test_delete_trip(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+    deleted=client.delete(f"/api/v1/trips/{england_trip["id"]}")
+    assert deleted.status_code == 200
+
+def test_delete_ongoing_trip(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+
+    ongoin_trip=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "ongoing"
+    })
+    deleted_ongoing_trip=client.delete(f"/api/v1/trips/{england_trip["id"]}")
+    assert deleted_ongoing_trip.status_code == 409

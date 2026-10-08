@@ -66,6 +66,8 @@ def delete_trip_service(trip_id):
     trip=db.session.get(Trip,trip_id)
     if trip is None:
         return jsonify({"error":"TRIP_NOT_FOUND","message":"Trip not found"}),404
+    if trip.status == "ONGOING":
+        return jsonify({"error":"TRIP_IS_ONGOING","message":"cannot delete an ongoing trip"}),409
     db.session.delete(trip)
     db.session.commit()
     return jsonify({"message":"Trip deleted successfully"}),200
