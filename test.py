@@ -479,8 +479,47 @@ def test_delete_ongoing_trip(client):
     })
     england_trip=response.get_json()
 
-    ongoin_trip=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+    ongoing_trip=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
         "status": "ongoing"
     })
     deleted_ongoing_trip=client.delete(f"/api/v1/trips/{england_trip["id"]}")
     assert deleted_ongoing_trip.status_code == 409
+
+def test_update_cancelled_trip(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+
+    cancelled_trip=client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "cancelled"
+    })
+    update_ongoing_trip=client.put(f"/api/v1/trips/{england_trip["id"]}",json={
+        "destination":"India"
+    })
+    assert update_ongoing_trip.status_code == 409
+
+def test_update_completed_trip(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "ongoing"
+    })
+    client.patch(f"/api/v1/trips/{england_trip["id"]}/status",json={
+        "status": "completed"
+    })
+    update_completed_trip=client.put(f"/api/v1/trips/{england_trip["id"]}",json={
+        "destination":"India"
+    })
+    assert update_completed_trip.status_code == 409

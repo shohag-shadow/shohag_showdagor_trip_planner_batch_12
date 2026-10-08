@@ -36,6 +36,8 @@ def update_trip_service(trip_id,data):
     trip=db.session.get(Trip,trip_id)
     if trip is None:
         return jsonify({"error":"TRIP_NOT_FOUND","message":"Trip not found"}),404
+    if trip.status in ["COMPLETED","CANCELLED"]:
+        return jsonify({"error":f"CANNOT_UPDATE_{trip.status}_TRIP","message":f"You cannot update a trip that is {trip.status}"}),409
     update_time_error=validate_update_trip_time(data,trip)
     if update_time_error is not None:
         return update_time_error
