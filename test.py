@@ -186,3 +186,15 @@ def test_create_trip_start_date_after_end_date(client):
         })
     assert start_date_after_end_date.status_code == 400
     assert start_date_after_end_date.get_json()["error"] == "INVALID_DATE_RANGE"
+
+def test_create_trip_cannot_set_status(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "Cox's Bazar",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5,
+        "status": "ONGOING"
+    })
+    created=response.get_json()    
+    assert created["status"]=="PLANNED"
