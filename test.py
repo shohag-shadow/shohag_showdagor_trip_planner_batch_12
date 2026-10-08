@@ -637,3 +637,42 @@ def test_traveler_join_after_plan(client):
     })
     assert join_traveler.status_code == 409
     assert join_traveler.get_json()["error"] == "TRIP_NOT_PLANNED"
+
+def test_conflict_updating_trip_time_with_traveler(client):
+    response=client.post("/api/v1/trips",json={
+        "destination": "England",
+        "start_date": "2026-10-20",
+        "end_date": "2026-10-23",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    england_trip=response.get_json()
+    response=client.post("/api/v1/trips",json={
+        "destination": "Shilong",
+        "start_date": "2026-10-24",
+        "end_date": "2026-10-25",
+        "budget": 30000,
+        "max_travelers": 5
+    })
+    shilong_trip=response.get_json()
+    client.post(f"/api/v1/trips/{england_trip["id"]}/travelers",json={
+        "name":"apa",
+        "email":"apa@gmail.com"
+    })
+    client.post(f"/api/v1/trips/{shilong_trip["id"]}/travelers",json={
+        "name":"apa",
+        "email":"apa@gmail.com"
+    })
+    client.post(f"/api/v1/trips/{england_trip["id"]}/travelers",json={
+        "name":"vaiya",
+        "email":"vaiya@gmail.com"
+    })
+    client.post(f"/api/v1/trips/{shilong_trip["id"]}/travelers",json={
+        "name":"vaiya",
+        "email":"vaiya@gmail.com"
+    })
+    response=client.put(f"/api/v1/trips/{shilong_trip["id"]}",json={
+        "start_date": "2026-10-22"
+    })
+    assert response.status_code == 409
+    assert response.get_json()["error"] == "DATE_CONFLICT_WITH_TRAVELERS"
