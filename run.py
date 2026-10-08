@@ -5,4 +5,4 @@ load_dotenv()
 app=create_app()
 
 if __name__=="__main__":
-    app.run(port=environ.get("PORT"),debug=environ.get("FLASK_DEBUG"))
+    app.run(port=environ.get("PORT"),debug=environ.get("FLASK_DEBUG")=="True")

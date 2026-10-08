@@ -6,8 +6,10 @@ from app.routes import api
 def create_app(test_config=None):
     app=Flask(__name__,instance_relative_config=True)
     app.json.sort_keys = False
-    db_file = Path(app.instance_path)/environ.get("DATABASE_NAME")
+    db_file = Path(app.instance_path)/environ.get("DATABASE_NAME","trip_planner.db")
     app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_file}"
+    if test_config:
+        app.config.update(test_config)
     db.init_app(app)
     with app.app_context():
         db.create_all()
